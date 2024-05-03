@@ -1,0 +1,33 @@
+<style>
+    table, td, th{
+        border: 1px solid;
+        border-collapse: collapse;
+    }
+</style>
+
+<head>
+    <title>Weight Comparison</title>
+</head>
+
+<body>
+    <table>
+        <tr>
+            {%for item in heads%}
+            <th>
+                {{item}}
+            </th>
+            {%endfor%}
+        </tr>
+        {%for row in rows%}
+        <tr>
+            {%for item in row%}
+            <td>
+                {{item}}
+            </td>
+            {%endfor%}
+        </tr>
+        {%endfor%}
+    </table>
+
+    <form></form>
+</body>

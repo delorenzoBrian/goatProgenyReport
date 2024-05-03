@@ -1,0 +1,31 @@
+<style>
+    table, td, th{
+        border: 1px solid;
+        border-collapse: collapse;
+    }
+</style>
+
+<head>
+    <title>Winter Weights</title>
+</head>
+
+<body>
+    <table>
+        <tr>
+            {%for head in heads%}
+            <th>
+                {{head}}
+            </th>
+            {%endfor%}
+        </tr>
+        {%for row in rows%}
+        <tr>
+            {%for item in row%}
+            <td>
+                {{item}}
+            </td>
+            {%endfor%}
+        </tr>
+        {%endfor%}
+    </table>
+</body>

@@ -1,0 +1,148 @@
+/* 
+
+	Group 14
+	CSC 315 Project: DDL
+	Professor John DeGood
+
+
+	Code by Charlie Johnson
+
+*/
+
+-- Grabs desired attributes from goat relation
+DROP TABLE my_goat;
+CREATE TABLE my_goat AS
+	SELECT
+		animal_id as eid,
+		tag as vistag,
+		dob as dob,
+		sex as gender,
+		dam as dam,
+		sire as sire
+	FROM goat
+;
+
+-- Grabs desired attributes from weight relation
+DROP TABLE my_weight;
+CREATE TABLE my_weight AS
+	SELECT
+		animal_id as eid,
+		trait_code as trait_code,
+		alpha_value as wt_val,
+		when_measured as weighdate
+	FROM weight
+;
+
+-- Selects all live weights from November, December, or January for all goats
+DROP VIEW winter_weights;
+CREATE VIEW winter_weights AS(
+	SELECT eid, vistag, wt_val, weighdate
+	FROM my_weight
+	WHERE (EXTRACT(MONTH FROM weighdate) = 11 OR EXTRACT(MONTH FROM weighdate) = 12 OR EXTRACT(MONTH FROM weighdate) = 1) AND trait_code=53
+);
+
+-- Selects birthweights of all goats
+DROP VIEW birth_weights CASCADE;
+CREATE VIEW birth_weights AS(
+	SELECT eid, wt_val AS birth_weight
+	FROM my_weight
+	WHERE (trait_code=357) AND (wt_val <> '0.0') AND (wt_val <> '') AND
+			(EXTRACT(MONTH FROM weighdate) = 2 OR EXTRACT(MONTH FROM weighdate) = 3 OR EXTRACT(MONTH FROM weighdate) = 4
+																					OR EXTRACT(MONTH FROM weighdate) = 5)
+);
+
+-- Selects the weaning weights for all goats
+DROP VIEW wean_weights;
+CREATE VIEW wean_weights AS(
+	SELECT eid, vistag, wt_val AS wean_weight, wean_date
+	FROM(
+		SELECT eid, MIN(weighdate) AS wean_date
+		FROM my_weight NATURAL JOIN my_goat
+		WHERE (((EXTRACT(YEAR FROM weighdate) = EXTRACT(YEAR FROM dob)) AND (EXTRACT(MONTH FROM weighdate) = 8 OR EXTRACT(MONTH FROM weighdate) = 9))
+			  OR
+			  ((EXTRACT(YEAR FROM weighdate) = EXTRACT(YEAR FROM dob)) AND
+					(EXTRACT(YEAR FROM weighdate) = '2013' OR EXTRACT(YEAR FROM weighdate) = '2014' OR EXTRACT(YEAR FROM weighdate) = '2015') AND
+					(EXTRACT(MONTH FROM weighdate) = 7 OR EXTRACT(MONTH FROM weighdate) = 8 OR EXTRACT(MONTH FROM weighdate) = 9)))
+			  AND trait_code=53
+			  AND wt_val <> ''
+		GROUP BY eid
+		) NATURAL JOIN my_weight NATURAL JOIN my_goat
+	WHERE weighdate=wean_date
+	ORDER BY eid
+);
+
+-- Calculates the number of kids that each dam in the database has
+DROP VIEW num_kids;
+CREATE VIEW num_kids AS(
+	SELECT eid, vistag, SUM(CAST(int_numKids AS INT)) tot_numKids
+	FROM(
+		SELECT eid, vistag, wt_val kids_bred, SUBSTR(wt_val, 1, 1) int_numKids
+		FROM my_goat NATURAL JOIN my_weight
+		WHERE (trait_code=486) AND (wt_val <> '') AND (gender='Female')
+		ORDER BY eid
+		)
+	GROUP BY eid, vistag
+	ORDER BY eid
+);
+
+-- Calculates the average birthweights among all females
+DROP VIEW favgwt;
+CREATE VIEW favgwt AS(
+	SELECT AVG(CAST(birth_weight AS FLOAT)) favgwt_val
+	FROM birth_weights NATURAL JOIN my_goat
+	WHERE gender='Female' AND birth_weight <> ''
+);
+
+-- Calculates the average birthweights among all males
+DROP VIEW mavgwt;
+CREATE VIEW mavgwt AS(
+	SELECT AVG(CAST(birth_weight AS FLOAT)) mavgwt_val
+	FROM birth_weights NATURAL JOIN my_goat
+	WHERE (gender='Male' OR gender='Wether') AND birth_weight <> ''
+);
+
+-- Selects the last weight of each sold goat
+DROP VIEW sell_weights CASCADE;
+CREATE VIEW sell_weights AS(
+	SELECT animal_id AS eid, tag AS vistag, status_date AS sell_date,
+	CASE
+		WHEN status='Sold' THEN last_weight
+		ELSE 'Not sold'
+	END AS sell_weight
+	FROM goat
+	ORDER BY eid
+);
+
+-- Uses other views to create a progeny report for each dam
+DROP VIEW progeny_report;
+CREATE VIEW progeny_report AS(
+	SELECT my_goat.eid, my_goat.vistag, my_goat.dob, my_goat.dam, my_goat.sire, tot_numKids, birth_weight, wean_weight, sell_weight
+	FROM my_goat, num_kids, birth_weights, wean_weights, sell_weights
+	WHERE my_goat.eid=num_kids.eid AND num_kids.eid = birth_weights.eid AND birth_weights.eid=wean_weights.eid AND wean_weights.eid=sell_weights.eid
+);
+
+-- States if a goat is Overweight, Underweight, or Of Average Weights
+DROP VIEW weight_comparisons;
+CREATE VIEW weight_comparisons AS(
+	(SELECT my_goat.eid, my_goat.vistag, birth_weight,
+	CASE
+		WHEN CAST(birth_weight AS FLOAT) - CAST(mavgwt_val AS FLOAT) > 1 THEN 'Overweight'
+		WHEN CAST(birth_weight AS FLOAT) - CAST(mavgwt_val AS FLOAT) < -1 THEN 'Underweight'
+		ELSE 'Of Average Weight'
+	END AS wt_classification
+	FROM my_goat, birth_weights, mavgwt
+	WHERE my_goat.eid=birth_weights.eid AND birth_weight <> '0.0' AND birth_weight <> '0' AND (gender='Male' OR gender='Wether'))
+
+	UNION
+
+	(SELECT my_goat.eid, my_goat.vistag, birth_weight,
+	CASE
+		WHEN CAST(birth_weight AS FLOAT) - CAST(favgwt_val AS FLOAT) > 1 THEN 'Overweight'
+		WHEN CAST(birth_weight AS FLOAT) - CAST(favgwt_val AS FLOAT) < -1 THEN 'Underweight'
+		ELSE 'Of Average Weight'
+	END AS wt_classification
+	FROM my_goat, birth_weights, favgwt
+	WHERE my_goat.eid=birth_weights.eid AND birth_weight <> '0.0' AND birth_weight <> '0' AND gender = 'Female')
+
+	ORDER BY eid
+);

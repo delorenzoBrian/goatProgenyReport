@@ -1,0 +1,117 @@
+<!-- /templates/my-form.html-->
+
+<html>
+	<head>
+    	<title>Home</title>
+	</head>
+	
+<style>
+/* CSS for container */
+.container {
+  display: flex; /* Use flexbox */
+}
+
+/* CSS for left content */
+.left-content {
+  /* Optionally, add styling for left content */
+}
+
+/* CSS for right content */
+.right-content {
+  margin-left: auto; /* Push the right content to the right edge */
+  /* Optionally, add styling for right content */
+}
+</style>
+
+<style>
+
+.big-button {
+ 
+  width: 200px; 
+  height: 60px;
+  font-size: 20px; 
+  padding: 10px; 
+}
+
+</style>
+
+<style type="text/css">
+
+	th:tr{
+    	color: blue;
+	}
+	tr:nth-of-type(2n){
+    	border: 1px solid black;
+    	background-color: rgba(150, 150, 150, 0.5);
+	}
+
+	td{
+    	padding: 8px 8px;
+    	border: 1px solid black;
+	}
+</style>
+
+<style>
+
+.hidden {
+  display: none;
+}
+</style>
+
+<body>
+
+
+
+<div class="container">
+    
+    
+    
+    <div class="left-content">
+        
+        <form action="/progeny_report" method="POST">
+            
+        <button class="big-button" type="submit" name="Request" value="query_for_goat_progeny_report">Goat Progeny Report</button>
+        
+        </form>
+    </div>
+    
+    
+    
+        
+    <div class="left-content">
+        
+        <form action="/weight_comparisons" method="POST">
+        
+        <button class="big-button" type="submit" name="Request" value="query_for_goat_weights">Goat Weights</button>
+        
+        </form>
+    </div> 
+
+
+    <div class="left-content">
+      <form action="/winter_weights" method="POST">
+        <button class="big-button" type="submit" name="Request" value="query_for_wint_weights">Dam Winter Weights</button>
+      </form>
+    </div>
+    
+    
+</div>
+
+
+
+</body>
+
+
+	
+
+	<!-- minimal styling -->
+	<style>
+    	form {
+        	margin: 1%;
+    	}
+
+    	div {
+        	margin: 1% 0;
+    	}
+	</style>
+</html>

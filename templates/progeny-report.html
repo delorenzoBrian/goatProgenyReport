@@ -1,0 +1,35 @@
+
+<style>
+
+    table, th, td{
+        border: 1px solid;
+        border-collapse: collapse;
+    }
+
+
+</style>
+
+<head>
+    <title>Progeny Report</title>
+</head>
+
+<body>
+    <table>
+        <tr>
+            {%for item in heads%}
+            <th>
+                {{item}}
+            </th>
+            {%endfor%}
+        </tr>
+        {%for row in rows%}
+        <tr>
+            {%for item in row%}
+            <td>
+                {{item}}
+            </td>
+            {%endfor%}
+        </tr>
+        {%endfor%}
+    </table>
+</body>
